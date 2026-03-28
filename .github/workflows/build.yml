@@ -59,6 +59,7 @@ jobs:
         name: FreeFirePanel-Win64-${{matrix.build_type}}
         path: |
           ${{github.workspace}}/build/${{matrix.build_type}}/FreeFirePanel.exe
-          ${{github.workspace}}/resources/config.json
+          ${{github.workspace}}/resources/
+          ${{github.workspace}}/LOGO.jpg
         if-no-files-found: error
         retention-days: 14
