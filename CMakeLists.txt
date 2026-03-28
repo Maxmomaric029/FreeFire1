@@ -34,6 +34,14 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(imgui)
 
+# Descargamos Json
+FetchContent_Declare(
+    nlohmann_json
+    GIT_REPOSITORY https://github.com/nlohmann/json.git
+    GIT_TAG        v3.11.3
+)
+FetchContent_MakeAvailable(nlohmann_json)
+
 # Enlace estático u obtención de OpenGL
 find_package(OpenGL REQUIRED)
 
@@ -66,6 +74,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
     OpenGL::GL
     Threads::Threads
+    nlohmann_json::nlohmann_json
 )
 
 # Propiedades estáticas para asegurar compatibilidad en Actions
