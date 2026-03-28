@@ -1,0 +1,8 @@
+{
+    "aimbot_enabled": false,
+    "aimbot_fov": 15.0,
+    "aimbot_bone": 0,
+    "wallhack_enabled": false,
+    "no_recoil_enabled": false,
+    "esp_box_enabled": true
+}
