@@ -4,9 +4,15 @@
 #include "Config.h"
 #include "Glow.h"
 #include "Theme.h"
+#include <windows.h>
 #include <GL/gl.h>
 #include <string>
-#include <cmath>   // sinf, para animación pulse
+#include <cmath>
+
+struct GLFWwindow;
+
+extern GLFWwindow* g_window;
+extern ImFont* g_fontMono;
 
 // ── Font Awesome (reemplaza con el header real si tienes FA integrado) ────────
 #define ICON_AIMBOT   "\xef\x84\x9b"  // fa-crosshairs   U+F11B
@@ -141,6 +147,7 @@ namespace Menu {
         const float SIDE_W= 140.f;
 
         ImGui::SetNextWindowSize(ImVec2(WIN_W, WIN_H), ImGuiCond_Always);
+        ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
         ImGui::SetNextWindowBgAlpha(0.97f);
 
         // Sin padding para control total del layout
@@ -151,7 +158,9 @@ namespace Menu {
             ImGuiWindowFlags_NoTitleBar  |
             ImGuiWindowFlags_NoResize    |
             ImGuiWindowFlags_NoScrollbar |
-            ImGuiWindowFlags_NoScrollWithMouse;
+            ImGuiWindowFlags_NoScrollWithMouse |
+            ImGuiWindowFlags_NoSavedSettings | 
+            ImGuiWindowFlags_NoMove;
 
         if (!ImGui::Begin("##bloodworld", &open, wflags)) {
             ImGui::PopStyleVar();
@@ -159,6 +168,17 @@ namespace Menu {
             return;
         }
         ImGui::PopStyleVar(); // restaurar padding
+
+        // Lógica de arrastre de ventana nativo (para que no se corte el GLFW framebuffer)
+        if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0) && !ImGui::IsAnyItemHovered()) {
+#ifdef _WIN32
+            // Usando Windows HWND para delegar el movimiento físico al OS
+            extern "C" HWND glfwGetWin32Window(struct GLFWwindow* window);
+            HWND hwnd = glfwGetWin32Window(g_window);
+            ReleaseCapture();
+            SendMessage(hwnd, WM_NCLBUTTONDOWN, 2 /*HTCAPTION*/, 0);
+#endif
+        }
 
         ImDrawList* dl  = ImGui::GetWindowDrawList();
         ImVec2      wPos= ImGui::GetWindowPos();
@@ -225,7 +245,8 @@ namespace Menu {
             Glow::Text(dl, tpos2, Theme::U32_WHITE, txt2, 3.5f);
             ImGui::Dummy(ImVec2(0, tsz2.y + 2));
         }
-        // Subtítulo versión en morado dimmer
+        // Subtítulo versión en morado dimmer usando ShareTechMono
+        if (g_fontMono) ImGui::PushFont(g_fontMono);
         {
             const char* ver = "v1.0.0";
             ImVec2 vsz = ImGui::CalcTextSize(ver);
@@ -233,6 +254,7 @@ namespace Menu {
             ImGui::SetCursorPosX(vcx);
             ImGui::TextColored(ImVec4(0.50f, 0.10f, 0.90f, 0.70f), "%s", ver);
         }
+        if (g_fontMono) ImGui::PopFont();
 
         ImGui::Spacing();
         // Separador rojo
@@ -433,9 +455,12 @@ namespace Menu {
                 static float pulse_t = 0.f;
                 pulse_t += ImGui::GetIO().DeltaTime * 2.f;
                 float alpha = 0.5f + 0.5f * sinf(pulse_t);
+
+                if (g_fontMono) ImGui::PushFont(g_fontMono);
                 ImGui::TextColored(
                     ImVec4(0.85f, 0.08f, 0.08f, alpha),
                     "● Waiting for process...");
+                if (g_fontMono) ImGui::PopFont();
                 ImGui::Unindent(12.f);
             }
             break;

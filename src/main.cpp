@@ -19,6 +19,8 @@ Memory* memInstance = nullptr;
 GLuint g_LogoTexture = 0;
 int g_LogoWidth = 0;
 int g_LogoHeight = 0;
+ImFont* g_fontMono = nullptr;
+GLFWwindow* g_window = nullptr;
 
 static void glfw_error_callback(int error, const char* description) {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
@@ -49,10 +51,11 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-    // Create window with graphics context
-    GLFWwindow* window = glfwCreateWindow(650, 480, "FreeFire Panel", NULL, NULL);
+    // Create window with graphics context matching ImGui exactly
+    GLFWwindow* window = glfwCreateWindow(650, 430, "BloodWorld Panel", NULL, NULL);
     if (window == NULL)
         return 1;
+    g_window = window;
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1); // Enable vsync
 
@@ -64,7 +67,7 @@ int main() {
 
     // Load Fonts Estilo "Delete Hex"
     ImFont* fontUI = io.Fonts->AddFontFromFileTTF("resources/fonts/Rajdhani-Bold.ttf", 15.0f);
-    ImFont* fontMono = io.Fonts->AddFontFromFileTTF("resources/fonts/ShareTechMono-Regular.ttf", 13.0f);
+    g_fontMono = io.Fonts->AddFontFromFileTTF("resources/fonts/ShareTechMono-Regular.ttf", 13.0f);
 
     // Merge Icons FontAwesome 6 Solid sobre fontUI
     static const ImWchar icons_ranges[] = { 0xe005, 0xf8ff, 0 }; 
