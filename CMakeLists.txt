@@ -53,7 +53,7 @@ set(IMGUI_SOURCES
 )
 
 # Definimos el ejecutable WIN32 (Si pasas WIN32 ocultará la ventana de la terminal, puedes quitarlo para debug)
-add_executable(${PROJECT_NAME} WIN32 ${SOURCES} ${HEADERS} ${IMGUI_SOURCES})
+add_executable(${PROJECT_NAME} ${SOURCES} ${HEADERS} ${IMGUI_SOURCES})
 
 # Incluimos los headers recien descargados por cloc/Fetch
 target_include_directories(${PROJECT_NAME} PRIVATE

@@ -1,3 +1,4 @@
+#include <windows.h>
 #include <iostream>
 #include <GLFW/glfw3.h>
 #include "imgui.h"
@@ -10,9 +11,7 @@
 #include "utils/EmulatorDetector.h"
 #include <string>
 
-// FontAwesome identifiers (ejemplos para Iconos)
-#define ICON_FA_HOME "\xef\x80\x95"
-#define ICON_FA_COG "\xef\x80\x93"
+// Dependencias añadidas (ui)
 
 // Global pointers o variables locales en un main real, aquí simple
 Memory* memInstance = nullptr;
