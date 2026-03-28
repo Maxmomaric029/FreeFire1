@@ -25,8 +25,6 @@ jobs:
 
     - name: 🛠️ Setup MSVC Toolchain
       uses: microsoft/setup-msbuild@v2
-      with:
-        vswhere-path: true
 
     - name: 📦 Configure CMake Cache (v4)
       uses: actions/cache@v4
