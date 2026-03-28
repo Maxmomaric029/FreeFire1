@@ -10,9 +10,12 @@
 #include <cmath>
 
 struct GLFWwindow;
-
 extern GLFWwindow* g_window;
 extern ImFont* g_fontMono;
+
+#ifdef _WIN32
+extern "C" HWND glfwGetWin32Window(struct GLFWwindow* window);
+#endif
 
 // ── Font Awesome (reemplaza con el header real si tienes FA integrado) ────────
 #define ICON_AIMBOT   "\xef\x84\x9b"  // fa-crosshairs   U+F11B
@@ -173,7 +176,6 @@ namespace Menu {
         if (ImGui::IsWindowHovered() && ImGui::IsMouseClicked(0) && !ImGui::IsAnyItemHovered()) {
 #ifdef _WIN32
             // Usando Windows HWND para delegar el movimiento físico al OS
-            extern "C" HWND glfwGetWin32Window(struct GLFWwindow* window);
             HWND hwnd = glfwGetWin32Window(g_window);
             ReleaseCapture();
             SendMessage(hwnd, WM_NCLBUTTONDOWN, 2 /*HTCAPTION*/, 0);
