@@ -1,5 +1,6 @@
 #pragma once
 #include "imgui.h"
+#include "imgui_internal.h"
 #include <string>
 
 #define ICON_FA_CROSSHAIRS "(O) "
@@ -29,9 +30,9 @@ namespace Menu {
 
         ImU32 col_bg;
         if (ImGui::IsItemHovered())
-            col_bg = ImGui::GetColorU32(ImLerp(ImVec4(0.3f, 0.3f, 0.35f, 1.0f), ImVec4(0.15f, 0.80f, 0.38f, 1.0f), t));
+            col_bg = ImGui::ColorConvertFloat4ToU32(ImLerp(ImVec4(0.3f, 0.3f, 0.35f, 1.0f), ImVec4(0.15f, 0.80f, 0.38f, 1.0f), t));
         else
-            col_bg = ImGui::GetColorU32(ImLerp(ImVec4(0.2f, 0.2f, 0.25f, 1.0f), ImVec4(0.11f, 0.64f, 0.28f, 1.0f), t));
+            col_bg = ImGui::ColorConvertFloat4ToU32(ImLerp(ImVec4(0.2f, 0.2f, 0.25f, 1.0f), ImVec4(0.11f, 0.64f, 0.28f, 1.0f), t));
 
         draw_list->AddRectFilled(p, ImVec2(p.x + width, p.y + height), col_bg, height * 0.5f);
         draw_list->AddCircleFilled(ImVec2(p.x + radius + t * (width - radius * 2.0f), p.y + radius), radius - 1.5f, IM_COL32(255, 255, 255, 255));

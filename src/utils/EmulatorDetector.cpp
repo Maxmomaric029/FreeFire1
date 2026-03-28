@@ -22,7 +22,8 @@ std::string EmulatorDetector::DetectRunningEmulator() {
     if (Process32FirstW(snapshot, &entry) == TRUE) {
         do {
             std::wstring wExeName = entry.szExeFile;
-            std::string exeName(wExeName.begin(), wExeName.end());
+            std::string exeName(wExeName.length(), 0);
+            std::transform(wExeName.begin(), wExeName.end(), exeName.begin(), [](wchar_t c) { return (char)c; });
 
             for (const auto& emu : knownEmulators) {
                 // Comparamos el binario principal o su proceso auxiliar "headless"

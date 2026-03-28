@@ -12,7 +12,7 @@ private:
     HANDLE hProcess = nullptr;
 
     // Utilidad: Convierte un signature style "AA BB ?? CC" a un vector de bytes y una máscara "xx?x"
-    bool ParseSignature(const std::string& signature, std::vector<uint8_t>& pattern, std::string& mask) {
+    bool ParseSignature(const std::string& signature, std::vector<uint8_t>& pattern, std::string& mask) const {
         std::istringstream stream(signature);
         std::string word;
         while (stream >> word) {
