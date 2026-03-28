@@ -9,12 +9,12 @@
 #define ICON_FA_SHIELD_ALT "(S) "
 #define ICON_FA_COG        "(C) "
 
-namespace Menu {
+// ─── Referencias de Imagen (main.cpp) ─────────────────────────────────────
+extern GLuint g_LogoTexture;
+extern int g_LogoWidth;
+extern int g_LogoHeight;
 
-    // ─── Referencias de Imagen (main.cpp) ─────────────────────────────────────
-    extern GLuint g_LogoTexture;
-    extern int g_LogoWidth;
-    extern int g_LogoHeight;
+namespace Menu {
 
     // ─── Toggle Switch animado ────────────────────────────────────────────────
     inline void ToggleButton(const char* str_id, bool* v) {
@@ -70,12 +70,12 @@ namespace Menu {
         ImGui::BeginChild("Sidebar", ImVec2(150, 0), true);
 
         // Renderizado del Logo (auto-escalado al Sidebar)
-        if (Menu::g_LogoTexture != 0) {
+        if (g_LogoTexture != 0) {
             float imgWidth = 120.0f;
-            float imgHeight = 120.0f * (float)Menu::g_LogoHeight / (float)Menu::g_LogoWidth;
+            float imgHeight = 120.0f * (float)g_LogoHeight / (float)g_LogoWidth;
             ImGui::Spacing();
             ImGui::SetCursorPosX((150.0f - imgWidth) * 0.5f);
-            ImGui::Image((void*)(intptr_t)Menu::g_LogoTexture, ImVec2(imgWidth, imgHeight));
+            ImGui::Image((void*)(intptr_t)g_LogoTexture, ImVec2(imgWidth, imgHeight));
             ImGui::Spacing();
             ImGui::Separator();
         }
