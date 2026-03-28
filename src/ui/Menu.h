@@ -1,6 +1,7 @@
 #pragma once
 #include "imgui.h"
 #include "imgui_internal.h"
+#include "Config.h"
 #include <string>
 
 #define ICON_FA_CROSSHAIRS "(O) "
@@ -9,33 +10,33 @@
 #define ICON_FA_COG        "(C) "
 
 namespace Menu {
-    // Custom Toggle Switch (sustituto del Checkbox estándar)
-    inline void ToggleButton(const char* str_id, bool* v) {
-        ImVec2 p = ImGui::GetCursorScreenPos();
-        ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
-        float height = ImGui::GetFrameHeight();
-        float width = height * 1.55f;
-        float radius = height * 0.50f;
+    // ─── Referencias de Imagen (main.cpp) ─────────────────────────────────────
+    extern GLuint g_LogoTexture;
+    extern int g_LogoWidth;
+    extern int g_LogoHeight;
+
+    // ─── Toggle Switch animado ────────────────────────────────────────────────
+    inline void ToggleButton(const char* str_id, bool* v) {
+        ImVec2 p          = ImGui::GetCursorScreenPos();
+        ImDrawList* dl    = ImGui::GetWindowDrawList();
+        float height      = ImGui::GetFrameHeight();
+        float width       = height * 1.55f;
+        float radius      = height * 0.50f;
 
         ImGui::InvisibleButton(str_id, ImVec2(width, height));
-        if (ImGui::IsItemClicked())
-            *v = !*v;
+        if (ImGui::IsItemClicked()) *v = !*v;
 
         float t = *v ? 1.0f : 0.0f;
-        ImGuiContext& g = *GImGui;
-        float ANIM_SPEED = 0.08f;
-        if (g.LastActiveId == g.CurrentWindow->GetID(str_id)) // Animación muy básica
-            t = *v ? 1.0f : 0.0f;
 
-        ImU32 col_bg;
-        if (ImGui::IsItemHovered())
-            col_bg = ImGui::ColorConvertFloat4ToU32(ImLerp(ImVec4(0.3f, 0.3f, 0.35f, 1.0f), ImVec4(0.15f, 0.80f, 0.38f, 1.0f), t));
-        else
-            col_bg = ImGui::ColorConvertFloat4ToU32(ImLerp(ImVec4(0.2f, 0.2f, 0.25f, 1.0f), ImVec4(0.11f, 0.64f, 0.28f, 1.0f), t));
+        ImU32 col_bg = ImGui::IsItemHovered()
+            ? ImGui::ColorConvertFloat4ToU32(ImLerp(ImVec4(0.3f,0.3f,0.35f,1.0f), ImVec4(0.15f,0.80f,0.38f,1.0f), t))
+            : ImGui::ColorConvertFloat4ToU32(ImLerp(ImVec4(0.2f,0.2f,0.25f,1.0f), ImVec4(0.11f,0.64f,0.28f,1.0f), t));
 
-        draw_list->AddRectFilled(p, ImVec2(p.x + width, p.y + height), col_bg, height * 0.5f);
-        draw_list->AddCircleFilled(ImVec2(p.x + radius + t * (width - radius * 2.0f), p.y + radius), radius - 1.5f, IM_COL32(255, 255, 255, 255));
+        dl->AddRectFilled(p, ImVec2(p.x + width, p.y + height), col_bg, height * 0.5f);
+        dl->AddCircleFilled(
+            ImVec2(p.x + radius + t * (width - radius * 2.0f), p.y + radius),
+            radius - 1.5f, IM_COL32(255,255,255,255));
     }
 
     inline void SwitchWithText(const char* label, bool* v) {
@@ -45,75 +46,140 @@ namespace Menu {
         ImGui::Text("%s", label);
     }
 
+    // ─── Sección con header colapsable ───────────────────────────────────────
+    inline bool BeginSection(const char* label) {
+        ImGui::PushStyleColor(ImGuiCol_Header,        ImVec4(0.15f,0.17f,0.20f,1.0f));
+        ImGui::PushStyleColor(ImGuiCol_HeaderHovered, ImVec4(0.20f,0.22f,0.27f,1.0f));
+        bool open = ImGui::CollapsingHeader(label, ImGuiTreeNodeFlags_DefaultOpen);
+        ImGui::PopStyleColor(2);
+        return open;
+    }
+
+    // ─── Panel principal ─────────────────────────────────────────────────────
     inline void DrawHUD() {
         static bool open = true;
-        ImGui::SetNextWindowSize(ImVec2(600, 400), ImGuiCond_FirstUseEver);
+        static int  current_tab = 0;
 
-        if (ImGui::Begin("FreeFire Modern Panel", &open, ImGuiWindowFlags_NoCollapse)) {
-            
-            // Layout de 2 columnas: Menú Izquierdo (Tabs) y Contenido Derecho
-            ImGui::BeginChild("Sidebar", ImVec2(150, 0), true);
-            
-            static int current_tab = 0;
-            if (ImGui::Selectable(ICON_FA_CROSSHAIRS "Aimbot", current_tab == 0)) current_tab = 0;
-            if (ImGui::Selectable(ICON_FA_EYE "Visuals", current_tab == 1)) current_tab = 1;
-            if (ImGui::Selectable(ICON_FA_SHIELD_ALT "Esp", current_tab == 2)) current_tab = 2;
-            if (ImGui::Selectable(ICON_FA_COG "Settings", current_tab == 3)) current_tab = 3;
-            
-            ImGui::EndChild();
+        ImGui::SetNextWindowSize(ImVec2(620, 420), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowBgAlpha(0.97f);
 
-            ImGui::SameLine();
+        if (!ImGui::Begin("FreeFire Panel", &open, ImGuiWindowFlags_NoCollapse))
+        { ImGui::End(); return; }
 
-            ImGui::BeginChild("Content", ImVec2(0, 0), true);
+        // ── Sidebar ──────────────────────────────────────────────────────────
+        ImGui::BeginChild("Sidebar", ImVec2(150, 0), true);
 
-            if (current_tab == 0) { // Aimbot
-                ImGui::Text("Aimbot Settings");
-                ImGui::Separator();
-                
-                static bool aimbot_enable = false;
-                static bool head_safe = false;
-                static float fov = 15.0f;
-                static int target_bone = 0;
-                
-                SwitchWithText("Enable Aimbot", &aimbot_enable);
-                SwitchWithText("Safe Head Hitbox", &head_safe);
-                
-                ImGui::Spacing();
-                ImGui::SliderFloat("FOV", &fov, 1.0f, 180.0f, "%.1f degrees");
-                
-                const char* bones[] = { "Head", "Neck", "Chest", "Pelvis" };
-                ImGui::Combo("Target Bone", &target_bone, bones, IM_ARRAYSIZE(bones));
-            }
-            else if (current_tab == 1) { // Visuals / Misc
-                ImGui::Text("Visual Enhancements");
-                ImGui::Separator();
-
-                static bool wallhack = false;
-                static bool no_recoil = false;
-                static bool black_sky = false;
-
-                SwitchWithText("Wallhack (Entity Outline)", &wallhack);
-                SwitchWithText("No Recoil", &no_recoil);
-                SwitchWithText("Black Sky", &black_sky);
-            }
-            else if (current_tab == 2) { // ESP
-               ImGui::Text("ESP Configuration");
-               ImGui::Separator();
-               
-               static bool esp_box = false;
-               static bool esp_lines = false;
-               
-               SwitchWithText("Draw Box ESP", &esp_box);
-               SwitchWithText("Draw Snaplines", &esp_lines);
-            }
-            else if (current_tab == 3) {
-                ImGui::Text("Injector Engine Setup");
-                ImGui::Separator();
-                ImGui::TextColored(ImVec4(0.5f,0.5f,0.5f,1.0f), "Status: Waiting for process...");
-            }
-
-            ImGui::EndChild();
+        // Renderizado del Logo (auto-escalado al Sidebar)
+        if (Menu::g_LogoTexture != 0) {
+            float imgWidth = 120.0f;
+            float imgHeight = 120.0f * (float)Menu::g_LogoHeight / (float)Menu::g_LogoWidth;
+            ImGui::Spacing();
+            ImGui::SetCursorPosX((150.0f - imgWidth) * 0.5f);
+            ImGui::Image((void*)(intptr_t)Menu::g_LogoTexture, ImVec2(imgWidth, imgHeight));
+            ImGui::Spacing();
+            ImGui::Separator();
         }
+
+        ImGui::Spacing();
+        ImGui::TextDisabled("  NAVIGATION");
+        ImGui::Separator();
+        ImGui::Spacing();
+
+        const struct { const char* icon; const char* name; } tabs[] = {
+            { ICON_FA_CROSSHAIRS, "Aimbot"   },
+            { ICON_FA_EYE,        "Visuals"  },
+            { ICON_FA_SHIELD_ALT, "ESP"      },
+            { ICON_FA_COG,        "Settings" },
+        };
+        for (int i = 0; i < 4; i++) {
+            char buf[64];
+            snprintf(buf, sizeof(buf), "%s%s", tabs[i].icon, tabs[i].name);
+            if (ImGui::Selectable(buf, current_tab == i))
+                current_tab = i;
+        }
+        ImGui::EndChild();
+
+        ImGui::SameLine();
+
+        // ── Contenido ────────────────────────────────────────────────────────
+        ImGui::BeginChild("Content", ImVec2(0, 0), true);
+
+        switch (current_tab) {
+
+        // ── Aimbot ───────────────────────────────────────────────────────────
+        case 0: {
+            ImGui::Spacing();
+            if (BeginSection("General")) {
+                ImGui::Indent(8.0f);
+                SwitchWithText("Enable Aimbot",     &Config::aimbot_enable);
+                SwitchWithText("Safe Head Hitbox",  &Config::head_safe);
+                ImGui::Unindent(8.0f);
+            }
+            ImGui::Spacing();
+            if (BeginSection("Targeting")) {
+                ImGui::Indent(8.0f);
+                ImGui::SliderFloat("FOV", &Config::fov, 1.0f, 180.0f, "%.1f deg");
+                const char* bones[] = { "Head", "Neck", "Chest", "Pelvis" };
+                ImGui::Combo("Target Bone", &Config::target_bone, bones, IM_ARRAYSIZE(bones));
+                ImGui::Unindent(8.0f);
+            }
+            break;
+        }
+
+        // ── Visuals ──────────────────────────────────────────────────────────
+        case 1: {
+            ImGui::Spacing();
+            if (BeginSection("Rendering")) {
+                ImGui::Indent(8.0f);
+                SwitchWithText("Wallhack (Outline)", &Config::wallhack);
+                SwitchWithText("Black Sky",           &Config::black_sky);
+                ImGui::Unindent(8.0f);
+            }
+            ImGui::Spacing();
+            if (BeginSection("Mechanics")) {
+                ImGui::Indent(8.0f);
+                SwitchWithText("No Recoil", &Config::no_recoil);
+                ImGui::Unindent(8.0f);
+            }
+            break;
+        }
+
+        // ── ESP ──────────────────────────────────────────────────────────────
+        case 2: {
+            ImGui::Spacing();
+            if (BeginSection("Player ESP")) {
+                ImGui::Indent(8.0f);
+                SwitchWithText("Draw Box ESP",    &Config::esp_box);
+                SwitchWithText("Draw Snaplines",  &Config::esp_lines);
+                ImGui::Unindent(8.0f);
+            }
+            break;
+        }
+
+        // ── Settings ─────────────────────────────────────────────────────────
+        case 3: {
+            ImGui::Spacing();
+            if (BeginSection("Configuration")) {
+                ImGui::Indent(8.0f);
+                ImGui::Spacing();
+                if (ImGui::Button("Save Config", ImVec2(120, 0)))  Config::Save();
+                ImGui::SameLine();
+                if (ImGui::Button("Load Config", ImVec2(120, 0)))  Config::Load();
+                ImGui::Spacing();
+                ImGui::TextDisabled("Path: resources/config.json");
+                ImGui::Unindent(8.0f);
+            }
+            ImGui::Spacing();
+            if (BeginSection("Status")) {
+                ImGui::Indent(8.0f);
+                ImGui::TextColored(ImVec4(0.5f,0.5f,0.5f,1.0f), "Waiting for process...");
+                ImGui::Unindent(8.0f);
+            }
+            break;
+        }
+        }
+
+        ImGui::EndChild();
         ImGui::End();
     }
 }

@@ -1,3 +1,5 @@
+#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
+
 #include <windows.h>
 #include <iostream>
 #include <GLFW/glfw3.h>
@@ -9,12 +11,14 @@
 #include "ui/Menu.h"
 #include "memory/Memory.h"
 #include "utils/EmulatorDetector.h"
+#include "ui/ImageLoader.h"
 #include <string>
 
-// Dependencias añadidas (ui)
-
-// Global pointers o variables locales en un main real, aquí simple
+// Global pointers
 Memory* memInstance = nullptr;
+GLuint g_LogoTexture = 0;
+int g_LogoWidth = 0;
+int g_LogoHeight = 0;
 
 static void glfw_error_callback(int error, const char* description) {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
@@ -35,13 +39,18 @@ int main() {
     if (!glfwInit())
         return 1;
 
+    // Hints de Transparencia y decoraciones:
+    glfwWindowHint(GLFW_TRANSPARENT_FRAMEBUFFER, GLFW_TRUE);
+    glfwWindowHint(GLFW_DECORATED, GLFW_FALSE);
+    glfwWindowHint(GLFW_FLOATING, GLFW_TRUE); // Mantener sobre todo
+
     // GL 3.0 + GLSL 130
     const char* glsl_version = "#version 130";
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
     // Create window with graphics context
-    GLFWwindow* window = glfwCreateWindow(800, 600, "FreeFire Panel - Modern External", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(650, 480, "FreeFire Panel", NULL, NULL);
     if (window == NULL)
         return 1;
     glfwMakeContextCurrent(window);
@@ -53,15 +62,25 @@ int main() {
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
-    // Load Fonts (Requiere las fuentes TrueType descargadas)
-    // io.Fonts->AddFontFromFileTTF("resources/Roboto-Medium.ttf", 16.0f);
-    // Para FontAwesome:
-    // static const ImWchar icons_ranges[] = { 0xf000, 0xf3ff, 0 };
-    // ImFontConfig icons_config; icons_config.MergeMode = true; icons_config.PixelSnapH = true;
-    // io.Fonts->AddFontFromFileTTF("resources/fa-solid-900.ttf", 16.0f, &icons_config, icons_ranges);
+    // Load Fonts Híbrido
+    ImFontConfig font_cfg;
+    font_cfg.OversampleH = 2;
+    font_cfg.OversampleV = 2;
+    ImFont* mainFont = io.Fonts->AddFontFromFileTTF("resources/fonts/Exo2.ttf", 16.0f, &font_cfg);
+
+    // Merge Icons FontAwesome 6 Solid
+    static const ImWchar icons_ranges[] = { 0xe005, 0xf8ff, 0 }; 
+    ImFontConfig icons_config;
+    icons_config.MergeMode = true; 
+    icons_config.PixelSnapH = true;
+    icons_config.GlyphMinAdvanceX = 13.0f; 
+    io.Fonts->AddFontFromFileTTF("resources/fonts/fa-solid-900.ttf", 16.0f, &icons_config, icons_ranges);
 
     // Setup Dear ImGui style (Modern Theme)
-    Theme::ApplyModernDarkTheme();
+    Theme::SetupStyle(); // Adaptado al nuevo Theme transparente
+
+    // Cargar imagen de Banner local
+    ImageLoader::LoadTextureFromFile("LOGO.jpg", &g_LogoTexture, &g_LogoWidth, &g_LogoHeight);
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);
@@ -84,7 +103,8 @@ int main() {
         int display_w, display_h;
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
-        glClearColor(0.08f, 0.08f, 0.08f, 1.0f);
+        // Limpiar completamente el framebuffer con transparencia alfa 0
+        glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 

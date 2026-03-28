@@ -2,7 +2,7 @@
 #include "imgui.h"
 
 namespace Theme {
-    inline void ApplyModernDarkTheme() {
+    inline void SetupStyle() {
         ImGuiStyle& style = ImGui::GetStyle();
         
         // Bordes redondeados y dimensiones
@@ -24,10 +24,10 @@ namespace Theme {
         colors[ImGuiCol_Text]                   = ImVec4(0.95f, 0.96f, 0.98f, 1.00f);
         colors[ImGuiCol_TextDisabled]           = ImVec4(0.36f, 0.42f, 0.47f, 1.00f);
         
-        // Fondo Principal
-        colors[ImGuiCol_WindowBg]               = ImVec4(0.09f, 0.10f, 0.13f, 0.98f);
-        colors[ImGuiCol_ChildBg]                = ImVec4(0.12f, 0.13f, 0.16f, 1.00f);
-        colors[ImGuiCol_PopupBg]                = ImVec4(0.08f, 0.08f, 0.08f, 0.94f);
+        // Fondo Principal Híbrido Oscuro / Transparente Estilo Milk Glass
+        colors[ImGuiCol_WindowBg]               = ImVec4(0.06f, 0.07f, 0.08f, 0.85f);
+        colors[ImGuiCol_ChildBg]                = ImVec4(0.00f, 0.00f, 0.00f, 0.15f);
+        colors[ImGuiCol_PopupBg]                = ImVec4(0.05f, 0.05f, 0.05f, 0.90f);
         
         // Marcos y Bordes
         colors[ImGuiCol_Border]                 = ImVec4(0.18f, 0.20f, 0.25f, 0.50f);
