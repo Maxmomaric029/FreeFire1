@@ -62,19 +62,19 @@ int main() {
     ImGuiIO& io = ImGui::GetIO(); (void)io;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
-    // Load Fonts Híbrido
-    ImFontConfig font_cfg;
-    font_cfg.OversampleH = 2;
-    font_cfg.OversampleV = 2;
-    ImFont* mainFont = io.Fonts->AddFontFromFileTTF("resources/fonts/Exo2.ttf", 16.0f, &font_cfg);
+    // Load Fonts Estilo "Delete Hex"
+    ImFont* fontUI = io.Fonts->AddFontFromFileTTF("resources/fonts/Rajdhani-Bold.ttf", 15.0f);
+    ImFont* fontMono = io.Fonts->AddFontFromFileTTF("resources/fonts/ShareTechMono-Regular.ttf", 13.0f);
 
-    // Merge Icons FontAwesome 6 Solid
+    // Merge Icons FontAwesome 6 Solid sobre fontUI
     static const ImWchar icons_ranges[] = { 0xe005, 0xf8ff, 0 }; 
     ImFontConfig icons_config;
     icons_config.MergeMode = true; 
     icons_config.PixelSnapH = true;
-    icons_config.GlyphMinAdvanceX = 13.0f; 
-    io.Fonts->AddFontFromFileTTF("resources/fonts/fa-solid-900.ttf", 16.0f, &icons_config, icons_ranges);
+    icons_config.GlyphMinAdvanceX = 13.0f; // Fix icono overlap
+    io.Fonts->AddFontFromFileTTF("resources/fonts/fa-solid-900.ttf", 13.0f, &icons_config, icons_ranges);
+
+    io.Fonts->Build();
 
     // Setup Dear ImGui style (Modern Theme)
     Theme::SetupStyle(); // Adaptado al nuevo Theme transparente

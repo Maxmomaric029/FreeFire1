@@ -2,7 +2,10 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 #include "Config.h"
+#include <GL/gl.h>
 #include <string>
+
+#include "Glow.h"
 
 #define ICON_FA_CROSSHAIRS "(O) "
 #define ICON_FA_EYE        "(V) "
@@ -55,26 +58,69 @@ namespace Menu {
         return open;
     }
 
+    // ─── Decoración X ────────────────────────────────────────────────────────
+    inline void DrawDecorativeX(ImDrawList* dl, ImVec2 center, float size, ImU32 color) {
+        float h = size * 0.5f;
+        Glow::Line(dl,
+            ImVec2(center.x - h, center.y - h),
+            ImVec2(center.x + h, center.y + h),
+            color, 1.0f, 4.0f);
+        Glow::Line(dl,
+            ImVec2(center.x + h, center.y - h),
+            ImVec2(center.x - h, center.y + h),
+            color, 1.0f, 4.0f);
+    }
+
     // ─── Panel principal ─────────────────────────────────────────────────────
     inline void DrawHUD() {
         static bool open = true;
         static int  current_tab = 0;
 
-        ImGui::SetNextWindowSize(ImVec2(620, 420), ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(650, 420), ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowBgAlpha(0.97f);
 
-        if (!ImGui::Begin("FreeFire Panel", &open, ImGuiWindowFlags_NoCollapse))
-        { ImGui::End(); return; }
+        // Sin padding en la ventana para dibujar Glow perimetral correctamente
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0,0));
+        if (!ImGui::Begin("FreeFire Panel", &open, ImGuiWindowFlags_NoCollapse)) {
+            ImGui::PopStyleVar();
+            ImGui::End(); 
+            return; 
+        }
+
+        ImDrawList* dl = ImGui::GetWindowDrawList();
+        ImVec2 wPos    = ImGui::GetWindowPos();
+        ImVec2 wSize   = ImGui::GetWindowSize();
+
+        // Border de toda la ventana con glow azul neón futurista (#0088CC / #00AAFF)
+        Glow::Rect(dl,
+            ImVec2(wPos.x + 1, wPos.y + 1),
+            ImVec2(wPos.x + wSize.x - 1, wPos.y + wSize.y - 1),
+            IM_COL32(0, 136, 204, 255));
+
+        // Separador decorativo con glow entre Sidebar y Content
+        Glow::Line(dl,
+            ImVec2(wPos.x + 130, wPos.y + 30),
+            ImVec2(wPos.x + 130, wPos.y + wSize.y - 10),
+            IM_COL32(0, 136, 204, 180));
+            
+        // Dibujamos algunas Xs decorativas en el fondo
+        DrawDecorativeX(dl, ImVec2(wPos.x + wSize.x - 50, wPos.y + wSize.y - 50), 40.0f, IM_COL32(0, 136, 204, 40));
+        DrawDecorativeX(dl, ImVec2(wPos.x + wSize.x - 120, wPos.y + 100), 25.0f, IM_COL32(0, 170, 255, 30));
+
+        // Restaurar padding dentro de la ventana real
+        ImGui::PopStyleVar();
+        ImGui::SetCursorPos(ImVec2(10, 10)); // Margen interior superior izquierdo manual
 
         // ── Sidebar ──────────────────────────────────────────────────────────
-        ImGui::BeginChild("Sidebar", ImVec2(150, 0), true);
+        ImGui::BeginChild("Sidebar", ImVec2(130, 0), true);
 
-        // Renderizado del Logo (auto-escalado al Sidebar)
+        // Renderizado del Logo (auto-escalado dinámico al Sidebar)
         if (g_LogoTexture != 0) {
-            float imgWidth = 120.0f;
-            float imgHeight = 120.0f * (float)g_LogoHeight / (float)g_LogoWidth;
+            float imgWidth = 100.0f;
+            float sidebarWidth = ImGui::GetContentRegionAvail().x;
+            float imgHeight = 100.0f * (float)g_LogoHeight / (float)g_LogoWidth;
             ImGui::Spacing();
-            ImGui::SetCursorPosX((150.0f - imgWidth) * 0.5f);
+            ImGui::SetCursorPosX((sidebarWidth - imgWidth) * 0.5f);
             ImGui::Image((void*)(intptr_t)g_LogoTexture, ImVec2(imgWidth, imgHeight));
             ImGui::Spacing();
             ImGui::Separator();

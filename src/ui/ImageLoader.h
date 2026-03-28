@@ -4,7 +4,6 @@
 #include <windows.h>
 #include <GL/gl.h>
 
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 #include "../utils/Logger.h"
