@@ -1,59 +1,49 @@
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <vector>
+#include "EmulatorDetector.h"
+#include <windows.h>
+#include <TlHelp32.h>
+#include <algorithm>
 
-// Función genérica para chequear si un archivo o directorio existe
-bool CheckFileExists(const std::string& path) {
-    std::ifstream file(path);
-    return file.good();
-}
-
-// Emular la lectura de una propiedad del sistema de Android (como getprop)
-// En Android real esto usaría <sys/system_properties.h> y __system_property_get
-std::string MockGetSystemProperty(const std::string& prop) {
-    // Simulación: Si se corre en un emulador común, podría devolver estos valores
-    if (prop == "ro.hardware") return "vbox86";
-    if (prop == "ro.build.flavor") return "vbox86p-user";
-    if (prop == "ro.product.board") return "unknown";
-    return "normal_device_value";
-}
-
-bool DetectEmulator() {
-    bool isEmulator = false;
-
-    // 1. Artefactos de archivos: Buscar controladores o archivos típicos de emuladores
-    std::vector<std::string> knownEmulatorFiles = {
-        "/dev/socket/qemud",               // QEMU/Memu/Android Studio
-        "/dev/qemu_pipe",                  // Interfaz QEMU
-        "/system/lib/libc_malloc_debug_qemu.so",
-        "/sys/qemu_trace",
-        "/system/bin/nox-prop",            // Archivo de NOX Player
-        "/system/bin/microvirt-prop"       // Archivo de MEmu
+EmulatorDetector::EmulatorDetector() {
+    knownEmulators = {
+        {"BlueStacks", "HD-Player.exe", ""},
+        {"LDPlayer", "dnplayer.exe", "LdBoxHeadless.exe"},
+        {"SmartGaGa", "ProjectTitan.exe", ""},
+        {"GameLoop", "aow_exe.exe", ""}
     };
-
-    for (const auto& file : knownEmulatorFiles) {
-        if (CheckFileExists(file)) {
-            std::cout << "[! ALERTA] Artefacto de emulador detectado: " << file << std::endl;
-            isEmulator = true;
-        }
-    }
-
-    // 2. Propiedades del sistema: Revisar propiedades predeterminadas del hardware
-    std::string hardware = MockGetSystemProperty("ro.hardware");
-    if (hardware == "vbox86" || hardware == "nox" || hardware == "ttVM_x86") {
-        std::cout << "[! ALERTA] Propiedad de hardware sospechosa: " << hardware << std::endl;
-        isEmulator = true;
-    }
-
-    std::string board = MockGetSystemProperty("ro.product.board");
-    if (board == "unknown" || board == "goldfish") {
-        std::cout << "[! ALERTA] Propiedad de placa sospechosa: " << board << std::endl;
-        isEmulator = true;
-    }
-
-    return isEmulator;
 }
 
-// Nota: se puede llamar a DetectEmulator() desde main.cpp o donde sea necesario
-// para ejecutar la comprobación de seguridad abstacta.
+std::string EmulatorDetector::DetectRunningEmulator() {
+    HANDLE snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, NULL);
+    if (snapshot == INVALID_HANDLE_VALUE) return "";
+
+    PROCESSENTRY32W entry;
+    entry.dwSize = sizeof(PROCESSENTRY32W);
+
+    if (Process32FirstW(snapshot, &entry) == TRUE) {
+        do {
+            std::wstring wExeName = entry.szExeFile;
+            std::string exeName(wExeName.begin(), wExeName.end());
+
+            for (const auto& emu : knownEmulators) {
+                // Comparamos el binario principal o su proceso auxiliar "headless"
+                if (_stricmp(exeName.c_str(), emu.processName.c_str()) == 0 || 
+                    (!emu.auxiliaryProcess.empty() && _stricmp(exeName.c_str(), emu.auxiliaryProcess.c_str()) == 0)) {
+                    CloseHandle(snapshot);
+                    
+                    // Si encontramos LdBoxHeadless, la clase Memory usará dnplayer.exe o viceversa.
+                    // Generalmente, a Memoria le damos al motor pesado: LdBoxHeadless o HD-Player.
+                    return exeName; // Retornamos el ejecutable detectado (v.g. "HD-Player.exe")
+                }
+            }
+        } while (Process32NextW(snapshot, &entry) == TRUE);
+    }
+    
+    CloseHandle(snapshot);
+    return "";
+}
+
+std::string EmulatorDetector::GetDetectedEmulatorName() const {
+    // Si queremos el nombre amigable (e.g. "BlueStacks" en vez del .exe)
+    // omitimos la lógica repetida, esto es sólo un esqueleto robusto.
+    return "";
+}

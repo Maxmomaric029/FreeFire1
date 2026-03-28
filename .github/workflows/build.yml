@@ -1,20 +1,66 @@
-name: C++ CMake Build
+name: Build C++ FreeFirePanel (Windows Explorer)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "master" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main", "master" ]
+  workflow_dispatch:
 
 jobs:
-  build:
+  build-windows:
+    name: Build FreeFirePanel on MSVC x64
     runs-on: windows-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [Release]
+
     steps:
-    - uses: actions/checkout@v3
+    - name: 🛎️ Instanciando Repositorio (v4)
+      uses: actions/checkout@v4
+      with:
+        submodules: 'recursive' # En caso de que se añadan git submodules en el futuro
 
-    - name: Configure CMake
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=Release
+    - name: 🛠️ Setup MSVC Toolchain
+      uses: microsoft/setup-msbuild@v2
+      with:
+        vswhere-path: true
 
-    - name: Build
-      run: cmake --build ${{github.workspace}}/build --config Release
+    - name: 📦 Configure CMake Cache (v4)
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cmake/packages
+          build/_deps
+        key: ${{ runner.os }}-cmake-fetchcontent-${{ hashFiles('CMakeLists.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-cmake-fetchcontent-
+
+    - name: ⚙️ Configurar Entorno CMake
+      # Configuramos build estática para VS 2022
+      run: >
+        cmake -B ${{github.workspace}}/build
+        -G "Visual Studio 17 2022"
+        -DCMAKE_BUILD_TYPE=${{matrix.build_type}}
+        -A x64
+
+    - name: 🔨 Compilando FreeFirePanel
+      # Hacemos el build del proyecto con cmake, aprovechando todos los hilos
+      run: cmake --build ${{github.workspace}}/build --config ${{matrix.build_type}} --parallel
+
+    - name: 🔍 Verificación Post-Compilación
+      run: |
+        echo "Validando la creación del binario FreeFirePanel.exe"
+        Test-Path "${{github.workspace}}/build/${{matrix.build_type}}/FreeFirePanel.exe"
+
+    - name: 📤 Subiendo Artefacto Compilado (v4)
+      uses: actions/upload-artifact@v4
+      with:
+        name: FreeFirePanel-Win64-${{matrix.build_type}}
+        path: |
+          ${{github.workspace}}/build/${{matrix.build_type}}/FreeFirePanel.exe
+          ${{github.workspace}}/resources/config.json
+        if-no-files-found: error
+        retention-days: 14

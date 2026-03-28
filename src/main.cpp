@@ -7,16 +7,31 @@
 #include "ui/Theme.h"
 #include "ui/Menu.h"
 #include "memory/Memory.h"
+#include "utils/EmulatorDetector.h"
+#include <string>
 
 // FontAwesome identifiers (ejemplos para Iconos)
 #define ICON_FA_HOME "\xef\x80\x95"
 #define ICON_FA_COG "\xef\x80\x93"
+
+// Global pointers o variables locales en un main real, aquí simple
+Memory* memInstance = nullptr;
 
 static void glfw_error_callback(int error, const char* description) {
     fprintf(stderr, "GLFW Error %d: %s\n", error, description);
 }
 
 int main() {
+    EmulatorDetector detector;
+    std::string emuProcess = detector.DetectRunningEmulator();
+    if (!emuProcess.empty()) {
+        std::wstring widestr = std::wstring(emuProcess.begin(), emuProcess.end());
+        memInstance = new Memory(widestr.c_str());
+        printf("Conectado a emulador: %s\n", emuProcess.c_str());
+    } else {
+        printf("Esperando a que se abra un emulador válido...\n");
+        memInstance = new Memory();
+    }
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return 1;
